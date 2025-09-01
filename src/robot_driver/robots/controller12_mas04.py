@@ -17,18 +17,21 @@ class QuadrupedRobot:
         0x01,  # LF_HAA (Hip Abduction/Adduction)
         0x02,  # LF_HFE (Hip Flextion/Extension)
         0x03,  # LF_KFE (Knee Flextion/Extension)
-        # 前右腿 (Front-Right)
-        0x04,  # RF_HAA
-        0x05,  # RF_HFE
-        0x06,  # RF_KFE
-        # 后左腿 (Hind-Left)
-        0x07,  # LH_HAA
-        0x08,  # LH_HFE
-        0x09,  # LH_KFE
-        # 后右腿 (Hind-Right)
-        0x0A,  # RH_HAA
-        0x0B,  # RH_HFE
-        0x0C,  # RH_KFE
+
+        # # 前右腿 (Front-Right)
+        # 0x04,  # RF_HAA
+        # 0x05,  # RF_HFE
+        # 0x06,  # RF_KFE
+
+        # # 后左腿 (Hind-Left)
+        # 0x07,  # LH_HAA
+        # 0x08,  # LH_HFE
+        # 0x09,  # LH_KFE
+        
+        # # 后右腿 (Hind-Right)
+        # 0x0A,  # RH_HAA
+        # 0x0B,  # RH_HFE
+        # 0x0C,  # RH_KFE
     ]
     
     # 默认的MIT模式控制参数 (可以为不同关节设置不同值)

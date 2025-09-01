@@ -163,7 +163,7 @@ class DMMotorDriver:
 if __name__ == "__main__":
     # --- 配置 ---
     PORT = 'COM15'  # 修改为你的串口
-    MOTOR_IDS_TO_TEST = [0x03] 
+    MOTOR_IDS_TO_TEST = [1] 
     MOTOR_TYPE_4310 = DM_Motor_Type.DM4310
 
     try:
@@ -190,8 +190,7 @@ if __name__ == "__main__":
             
             # 为每个电机设置不同的目标位置
             for motor_id in MOTOR_IDS_TO_TEST:
-                # 让第一个电机正转，第二个反转
-                target_pos = math.radians(90.0) if motor_id == MOTOR_IDS_TO_TEST[0] else math.radians(-90.0)
+                target_pos = math.radians(0.0)
                 driver.set_mit_mode(motor_id, target_pos, vel_target, kp, kd, torque)
                 print(f"  > 已发送MIT指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
 
