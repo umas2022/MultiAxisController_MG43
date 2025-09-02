@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: controller12_mas04",
+            "name": "controller12_mas04",
             "type": "debugpy",
             "request": "launch",
             "module": "src.robot_driver.robots.controller12_mas04",
@@ -13,7 +13,7 @@
             "justMyCode": true
         },
         {
-            "name": "Python Debugger: dm_can_driver",
+            "name": "dm_can_driver",
             "type": "debugpy",
             "request": "launch",
             "module": "src.robot_driver.motor_driver.dm_can_driver",

@@ -6,9 +6,6 @@ from typing import List, Dict, Optional
 from src.robot_driver.motor_driver.dm_can_driver import DMMotorDriver, DM_Motor_Type
 
 class QuadrupedRobot:
-    """
-    一个四足机器人控制类，用于管理12个关节电机，并提供高级动作接口。
-    """
     
     # 机器人关节的物理和控制配置
     # 建议将这些ID与你的URDF或实际硬件的命名对应起来
@@ -18,25 +15,25 @@ class QuadrupedRobot:
         0x02,  # LF_HFE (Hip Flextion/Extension)
         0x03,  # LF_KFE (Knee Flextion/Extension)
 
-        # # 前右腿 (Front-Right)
-        # 0x04,  # RF_HAA
-        # 0x05,  # RF_HFE
-        # 0x06,  # RF_KFE
+        # 前右腿 (Front-Right)
+        0x04,  # RF_HAA
+        0x05,  # RF_HFE
+        0x06,  # RF_KFE
 
-        # # 后左腿 (Hind-Left)
-        # 0x07,  # LH_HAA
-        # 0x08,  # LH_HFE
-        # 0x09,  # LH_KFE
+        # 后左腿 (Hind-Left)
+        0x07,  # LH_HAA
+        0x08,  # LH_HFE
+        0x09,  # LH_KFE
         
-        # # 后右腿 (Hind-Right)
-        # 0x0A,  # RH_HAA
-        # 0x0B,  # RH_HFE
-        # 0x0C,  # RH_KFE
+        # 后右腿 (Hind-Right)
+        0x0A,  # RH_HAA
+        0x0B,  # RH_HFE
+        0x0C,  # RH_KFE
     ]
     
     # 默认的MIT模式控制参数 (可以为不同关节设置不同值)
     DEFAULT_KP = 15.0
-    DEFAULT_KD = 0.8
+    DEFAULT_KD = 0.2
 
     def __init__(self, port: str, motor_type: DM_Motor_Type = DM_Motor_Type.DM4310):
         """
@@ -51,60 +48,78 @@ class QuadrupedRobot:
         print("正在注册12个关节电机...")
         for joint_id in self.JOINT_IDS:
             self.driver.add_motor(joint_id, motor_type)
+
+        if not self.check_online():
+            raise RuntimeError("初始化失败：部分关节未响应。请检查连接。")
         
         print("正在使能所有关节...")
         self.driver.enable_all()
         time.sleep(1) # 等待电机使能稳定
         print("--- 四足机器人初始化完成，所有关节已使能 ---")
 
-    def home_all_joints(self, mode: str = "MIT", speed: float = 0.0, torque: float = 0.0):
+    def check_online(self) -> bool:
+        """
+        检查所有12个关节是否在线。
+        """
+        print("\n检查所有关节是否在线...")
+        retrys = 3
+        all_online = True
+        for joint_id in self.JOINT_IDS:
+            feedback = self.driver.get_feedback(joint_id)
+            initial_pos = feedback['position'] if feedback else None
+            initial_vel = feedback['velocity'] if feedback else None
+            initial_tau = feedback['torque'] if feedback else None
+            if initial_pos and initial_vel and initial_tau:
+                print(f"关节 ID {hex(joint_id)} 在线，位置: {math.degrees(initial_pos):.2f}°")
+            else:
+                while retrys > 0:
+                    time.sleep(0.1)
+                    feedback = self.driver.get_feedback(joint_id)
+                    retry_pos = feedback['position'] if feedback else None
+                    retry_vel = feedback['velocity'] if feedback else None
+                    retry_tau = feedback['torque'] if feedback else None
+                    if retry_pos and retry_vel and retry_tau:
+                        print(f"关节 ID {hex(joint_id)} 在线，位置: {math.degrees(retry_pos):.2f}°")
+                        break
+                    retrys -= 1
+                if retrys == 0:
+                    print(f"错误：关节 ID {hex(joint_id)} 未响应！请检查连接。")
+                    all_online = False
+        return all_online
+
+    def home_all_joints(self):
         """
         让所有12个关节回到零点位置。
-        
-        :param mode: 控制模式，可选 "MIT", "POS_VEL", "VEL"。默认为 "MIT"。
-        :param speed: 在 "POS_VEL" 或 "VEL" 模式下的目标速度 (rad/s)。
-        :param torque: 在 "MIT" 模式下的前馈力矩 (Nm)。
         """
-        print(f"\n执行归零动作，使用模式: {mode}")
-        
-        target_pos_rad = 0.0
-        
+        print(f"\n执行归零动作...")
+
         for joint_id in self.JOINT_IDS:
-            if mode == "MIT":
-                self.driver.set_mit_mode(
-                    motor_id=joint_id, 
-                    pos_rad=target_pos_rad, 
-                    vel_rad_s=0.0,  # 归零时目标速度为0
-                    kp=self.DEFAULT_KP, 
-                    kd=self.DEFAULT_KD, 
-                    torque_nm=torque
-                )
-            elif mode == "POS_VEL":
-                self.driver.set_pos_vel_mode(
-                    motor_id=joint_id,
-                    pos_rad=target_pos_rad,
-                    vel_rad_s=speed
-                )
-            elif mode == "VEL":
-                # 速度模式下没有“位置”概念，最接近“归零”的是让它停止转动
-                self.driver.set_vel_mode(
-                    motor_id=joint_id,
-                    vel_rad_s=0.0
-                )
-            elif mode == "TORQUE_POS":
-                # 这种模式较复杂，这里仅作演示
-                print("警告: TORQUE_POS模式需要特定的vel_des和i_des参数，此处仅演示归零。")
-                self.driver.set_torque_pos_mode(
-                    motor_id=joint_id,
-                    pos_rad=target_pos_rad,
-                    vel_des=0, # SDK特定单位
-                    i_des=0    # SDK特定单位
-                )
-            else:
-                print(f"错误: 不支持的控制模式 '{mode}'")
-                return
-        
-        print("所有关节的归零指令已发送。")
+            self.driver.set_pos_vel_mode(joint_id, 0.0, 0.5) # 1 rad/s速度回零     
+
+        while True:
+            all_reached = True
+            for joint_id in self.JOINT_IDS:
+                feedback = self.driver.get_feedback(joint_id)
+                if feedback:
+                    pos = feedback['position']
+                    # 允许2度误差
+                    if abs(pos) > math.radians(2.0):
+                        all_reached = False
+                        break
+                    # 堵转安全检测
+                    torque = feedback['torque']
+                    if abs(torque) > 0.5:
+                        self.shutdown()
+                        raise RuntimeError(f"错误：关节 ID {hex(joint_id)} 可能堵转，已紧急停止机器人！")
+                else:
+                    all_reached = False
+                    break
+            if all_reached:
+                print("所有关节已到达零点位置。")
+                break
+            time.sleep(0.1)
+
+
 
     def get_all_joint_feedback(self) -> Dict[int, Optional[Dict[str, float]]]:
         """
@@ -135,7 +150,7 @@ if __name__ == "__main__":
     # --- 配置 ---
     SERIAL_PORT = 'COM15'  # 修改为你的实际串口
 
-    robot = None # 初始化变量，确保finally块中可用
+    robot = None
     try:
         # 1. 创建机器人实例，这会自动初始化和使能电机
         robot = QuadrupedRobot(port=SERIAL_PORT)
@@ -143,11 +158,6 @@ if __name__ == "__main__":
         # 2. 发送高级动作指令
         # 默认使用MIT模式让所有电机回到0位
         robot.home_all_joints()
-
-        # # --- 如果想切换模式，可以这样做 (取消注释来测试) ---
-        # print("\n--- 切换到 POS_VEL 模式测试 ---")
-        # time.sleep(2) # 等待上个动作完成
-        # robot.home_all_joints(mode="POS_VEL", speed=1.0) # 让电机以1.0 rad/s的速度回到0点
 
         # 3. 持续监控机器人状态
         print("\n--- 开始监控所有关节状态 (按 Ctrl+C 停止) ---")

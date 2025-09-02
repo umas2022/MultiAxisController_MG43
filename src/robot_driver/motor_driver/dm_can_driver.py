@@ -41,7 +41,6 @@ class DMMotorDriver:
         motor = Motor(motor_type, motor_id, host_id)
         self.motors[motor_id] = motor
         self.motor_control.addMotor(motor)
-        print(f"电机 {hex(motor_id)} ({motor_type.name}) 已添加。")
         return True
 
     def enable_motor(self, motor_id: int):
@@ -163,7 +162,7 @@ class DMMotorDriver:
 if __name__ == "__main__":
     # --- 配置 ---
     PORT = 'COM15'  # 修改为你的串口
-    MOTOR_IDS_TO_TEST = [1] 
+    MOTOR_IDS_TO_TEST = [0x02] 
     MOTOR_TYPE_4310 = DM_Motor_Type.DM4310
 
     try:
