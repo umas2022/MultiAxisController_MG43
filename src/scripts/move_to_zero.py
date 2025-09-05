@@ -57,7 +57,7 @@ class DMMotorDriver:
             self.disable_motor(motor_id)
 
     # --- 控制模式 ---
-    def set_mit_mode(self, motor_id: int, pos_rad: float, vel_rad_s: float, kp: float, kd: float, torque_nm: float):
+    def move_mit_mode(self, motor_id: int, pos_rad: float, vel_rad_s: float, kp: float, kd: float, torque_nm: float):
         motor = self._get_motor_or_raise(motor_id)
         self.motor_control.switchControlMode(motor, Control_Type.MIT)
         self.motor_control.controlMIT(motor, kp, kd, pos_rad, vel_rad_s, torque_nm)
@@ -82,7 +82,7 @@ class DMMotorDriver:
 
         for i in range(steps):
             intermediate_pos = current_pos + (i + 1) / steps * diff
-            self.set_mit_mode(motor_id, intermediate_pos, 0.0, kp, kd, torque)
+            self.move_mit_mode(motor_id, intermediate_pos, 0.0, kp, kd, torque)
             time.sleep(step_time)
 
     # --- 反馈 ---

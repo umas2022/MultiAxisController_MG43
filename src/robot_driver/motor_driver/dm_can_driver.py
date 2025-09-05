@@ -66,15 +66,24 @@ class DMMotorDriver:
             self.disable_motor(motor_id)
 
     # --- 控制模式封装 ---
+    def switch_mode_mit(self, motor_id: int):
+        """将指定电机切换到MIT控制模式。"""
+        motor = self._get_motor_or_raise(motor_id)
+        self.motor_control.switchControlMode(motor, Control_Type.MIT)
 
-    def set_mit_mode(self, motor_id: int, pos_rad: float, vel_rad_s: float, kp: float, kd: float, torque_nm: float):
+    def switch_mode_pos_vel(self, motor_id: int):
+        """将指定电机切换到位置速度控制模式。"""
+        motor = self._get_motor_or_raise(motor_id)
+        self.motor_control.switchControlMode(motor, Control_Type.POS_VEL)
+
+    def move_mit_mode(self, motor_id: int, pos_rad: float, vel_rad_s: float, kp: float, kd: float, torque_nm: float):
         """
         设置指定电机为MIT控制模式并发送指令。
         这是最常用的模式，可同时控制位置、速度和前馈力矩（阻抗控制）。
         Total_Torque = [ Kp * (Pos_target - Pos_current) ] + [ Kd * (Vel_target - Vel_current) ] + [ Torque_feedforward ]
         """
         motor = self._get_motor_or_raise(motor_id)
-        self.motor_control.switchControlMode(motor, Control_Type.MIT)
+        # self.motor_control.switchControlMode(motor, Control_Type.MIT)
         self.motor_control.controlMIT(motor, kp, kd, pos_rad, vel_rad_s, torque_nm)
     
     def set_pos_vel_mode(self, motor_id: int, pos_rad: float, vel_rad_s: float):
@@ -83,7 +92,7 @@ class DMMotorDriver:
         电机将尝试同时达到目标位置和速度。
         """
         motor = self._get_motor_or_raise(motor_id)
-        self.motor_control.switchControlMode(motor, Control_Type.POS_VEL)
+        # self.motor_control.switchControlMode(motor, Control_Type.POS_VEL)
         self.motor_control.control_Pos_Vel(motor, pos_rad, vel_rad_s)
 
     def set_vel_mode(self, motor_id: int, vel_rad_s: float):
@@ -93,6 +102,8 @@ class DMMotorDriver:
         """
         motor = self._get_motor_or_raise(motor_id)
         self.motor_control.switchControlMode(motor, Control_Type.VEL)
+        # 切换模式后重新使能电机，避免短暂失能状态
+        self.motor_control.enable(motor)
         self.motor_control.control_Vel(motor, vel_rad_s)
 
     def set_torque_pos_mode(self, motor_id: int, pos_rad: float, vel_des: float, i_des: float):
@@ -104,6 +115,8 @@ class DMMotorDriver:
         """
         motor = self._get_motor_or_raise(motor_id)
         self.motor_control.switchControlMode(motor, Control_Type.Torque_Pos)
+        # 切换模式后重新使能电机，避免短暂失能状态
+        self.motor_control.enable(motor)
         self.motor_control.control_pos_force(motor, pos_rad, vel_des, i_des)
 
     # --- 反馈与关闭 ---
@@ -119,7 +132,7 @@ class DMMotorDriver:
             # 步骤 1: 发送状态请求指令
             self.motor_control.refresh_motor_status(motor)
             # 步骤 2: 短暂等待电机响应
-            time.sleep(0.005) # 稍微缩短延时以提高潜在频率
+            # time.sleep(0.002) # 稍微缩短延时以提高潜在频率
             # 步骤 3: 接收并解析响应数据
             self.motor_control.recv()
             
@@ -190,7 +203,7 @@ if __name__ == "__main__":
             # 为每个电机设置不同的目标位置
             for motor_id in MOTOR_IDS_TO_TEST:
                 target_pos = math.radians(0.0)
-                driver.set_mit_mode(motor_id, target_pos, vel_target, kp, kd, torque)
+                driver.move_mit_mode(motor_id, target_pos, vel_target, kp, kd, torque)
                 print(f"  > 已发送MIT指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
 
 
