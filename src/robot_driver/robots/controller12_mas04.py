@@ -5,31 +5,35 @@ from typing import List, Dict, Optional
 # 从你的项目结构中导入DMMotorDriver
 from src.robot_driver.motor_driver.dm_can_driver import DMMotorDriver, DM_Motor_Type
 
+from dataclasses import dataclass
+
+@dataclass
+class JointConfig:
+    id: int
+    reversed: bool = False   # 是否反转方向
+    offset: float = 0.0      # 零点微调（单位: rad）
+
+
 class QuadrupedRobot:
-    
-    # 机器人关节的物理和控制配置
-    # 建议将这些ID与你的URDF或实际硬件的命名对应起来
-    JOINT_IDS = [
-        # 前左腿 (Front-Left)
-        0x01,  # LF_HAA (Hip Abduction/Adduction)
-        0x02,  # LF_HFE (Hip Flextion/Extension)
-        0x03,  # LF_KFE (Knee Flextion/Extension)
+    # 关节配置表：每个关节一个配置
+    JOINT_CONFIGS = [
+        JointConfig(0x01, reversed=False, offset=0.0),  # LF_HAA
+        JointConfig(0x02, reversed=False, offset=0.0),  # LF_HFE
+        JointConfig(0x03, reversed=True,  offset=0.05), # LF_KFE (例子: 反转+零点补偿)
 
-        # 前右腿 (Front-Right)
-        0x04,  # RF_HAA
-        0x05,  # RF_HFE
-        0x06,  # RF_KFE
+        JointConfig(0x04, reversed=False, offset=0.0),  # RF_HAA
+        JointConfig(0x05, reversed=False, offset=0.0),  # RF_HFE
+        JointConfig(0x06, reversed=True,  offset=-0.02),
 
-        # 后左腿 (Hind-Left)
-        0x07,  # LH_HAA
-        0x08,  # LH_HFE
-        0x09,  # LH_KFE
-        
-        # 后右腿 (Hind-Right)
-        0x0A,  # RH_HAA
-        0x0B,  # RH_HFE
-        0x0C,  # RH_KFE
+        JointConfig(0x07, reversed=False, offset=0.0),  # LH_HAA
+        JointConfig(0x08, reversed=False, offset=0.0),  
+        JointConfig(0x09, reversed=True,  offset=0.03),
+
+        JointConfig(0x0A, reversed=False, offset=0.0),  # RH_HAA
+        JointConfig(0x0B, reversed=False, offset=0.0),  
+        JointConfig(0x0C, reversed=True,  offset=-0.01),
     ]
+
     
     # 默认的MIT模式控制参数 (可以为不同关节设置不同值)
     DEFAULT_KP = 15.0
@@ -46,8 +50,8 @@ class QuadrupedRobot:
         self.driver = DMMotorDriver(port=port)
         
         print("正在注册12个关节电机...")
-        for joint_id in self.JOINT_IDS:
-            self.driver.add_motor(joint_id, motor_type)
+        for joint_obj in self.JOINT_CONFIGS:
+            self.driver.add_motor(joint_obj.id, motor_type)
 
         if not self.check_online():
             raise RuntimeError("初始化失败：部分关节未响应。请检查连接。")
@@ -64,26 +68,26 @@ class QuadrupedRobot:
         print("\n检查所有关节是否在线...")
         retrys = 3
         all_online = True
-        for joint_id in self.JOINT_IDS:
-            feedback = self.driver.get_feedback(joint_id)
+        for joint_obj in self.JOINT_CONFIGS:
+            feedback = self.driver.get_feedback(joint_obj.id)
             initial_pos = feedback['position'] if feedback else None
             initial_vel = feedback['velocity'] if feedback else None
             initial_tau = feedback['torque'] if feedback else None
             if initial_pos and initial_vel and initial_tau:
-                print(f"关节 ID {hex(joint_id)} 在线，位置: {math.degrees(initial_pos):.2f}°")
+                print(f"关节 ID {hex(joint_obj.id)} 在线，位置: {math.degrees(initial_pos):.2f}°")
             else:
                 while retrys > 0:
                     time.sleep(0.1)
-                    feedback = self.driver.get_feedback(joint_id)
+                    feedback = self.driver.get_feedback(joint_obj.id)
                     retry_pos = feedback['position'] if feedback else None
                     retry_vel = feedback['velocity'] if feedback else None
                     retry_tau = feedback['torque'] if feedback else None
                     if retry_pos and retry_vel and retry_tau:
-                        print(f"关节 ID {hex(joint_id)} 在线，位置: {math.degrees(retry_pos):.2f}°")
+                        print(f"关节 ID {hex(joint_obj.id)} 在线，位置: {math.degrees(retry_pos):.2f}°")
                         break
                     retrys -= 1
                 if retrys == 0:
-                    print(f"错误：关节 ID {hex(joint_id)} 未响应！请检查连接。")
+                    print(f"错误：关节 ID {hex(joint_obj.id)} 未响应！请检查连接。")
                     all_online = False
         return all_online
 
@@ -93,13 +97,13 @@ class QuadrupedRobot:
         """
         print(f"\n执行归零动作...")
 
-        for joint_id in self.JOINT_IDS:
-            self.driver.set_pos_vel_mode(joint_id, 0.0, 0.5) # 1 rad/s速度回零     
+        for joint_obj in self.JOINT_CONFIGS:
+            self.driver.set_pos_vel_mode(joint_obj.id, 0.0, 0.5) # 1 rad/s速度回零     
 
         while True:
             all_reached = True
-            for joint_id in self.JOINT_IDS:
-                feedback = self.driver.get_feedback(joint_id)
+            for joint_obj in self.JOINT_CONFIGS:
+                feedback = self.driver.get_feedback(joint_obj.id)
                 if feedback:
                     pos = feedback['position']
                     # 允许2度误差
@@ -128,10 +132,10 @@ class QuadrupedRobot:
         :return: 一个字典，键为关节ID，值为该关节的反馈数据字典。
         """
         all_feedback = {}
-        for joint_id in self.JOINT_IDS:
+        for joint_obj in self.JOINT_CONFIGS:
             # 内部已包含请求-响应流程
-            feedback = self.driver.get_feedback(joint_id)
-            all_feedback[joint_id] = feedback
+            feedback = self.driver.get_feedback(joint_obj.id)
+            all_feedback[joint_obj.id] = feedback
         return all_feedback
 
     def shutdown(self):
@@ -156,7 +160,6 @@ if __name__ == "__main__":
         robot = QuadrupedRobot(port=SERIAL_PORT)
 
         # 2. 发送高级动作指令
-        # 默认使用MIT模式让所有电机回到0位
         robot.home_all_joints()
 
         # 3. 持续监控机器人状态
@@ -170,7 +173,7 @@ if __name__ == "__main__":
             for i in range(0, 12, 3):
                 row_str = ""
                 for j in range(3):
-                    joint_id = robot.JOINT_IDS[i+j]
+                    joint_id = robot.JOINT_CONFIGS[i+j].id
                     state = joint_states.get(joint_id)
                     if state:
                         pos_deg = math.degrees(state['position'])
@@ -184,7 +187,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n程序被用户中断。")
     except Exception as e:
-        print(f"\n程序主流程发生严重错误: {e}")
+        print(f"\n程序发生错误: {e}")
     finally:
         # 无论发生什么，都确保机器人被安全关闭
         if robot:
