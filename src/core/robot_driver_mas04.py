@@ -3,7 +3,7 @@ import time
 from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from src.robot_driver.motor_driver.dm_can_driver import DMMotorDriver, DM_Motor_Type
+from src.drivers.motor_driver.motor_driver import  MotorDriver, DM_Motor_Type
 
 
 @dataclass
@@ -13,7 +13,7 @@ class JointConfig:
     offset: float = 0.0  # 零点微调（单位: rad）
 
 
-class Controller12:
+class RobotDriverMas04:
     # 关节配置表：每个关节一个配置
     JOINT_CONFIGS = [
         JointConfig(0x01, reversed=False, offset=math.radians(0.0)),  # LF_HAA
@@ -45,7 +45,7 @@ class Controller12:
         :param motor_type: 所有关节电机的型号。
         """
         print("--- 初始化四足机器人 ---")
-        self.driver = DMMotorDriver(port=port)
+        self.driver = MotorDriver(port=port)
 
         print("正在注册12个关节电机...")
         for joint_obj in self.JOINT_CONFIGS:
@@ -323,72 +323,3 @@ class Controller12:
         print("--- 机器人已安全关闭 ---")
 
 
-# ======================================================================
-#                            使用示例
-# ======================================================================
-if __name__ == "__main__":
-    # --- 配置 ---
-    SERIAL_PORT = "COM15"  # 修改为你的实际串口
-
-    robot = None
-    try:
-        # 创建机器人实例，初始化和使能电机
-        robot = Controller12(port=SERIAL_PORT)
-
-        # robot.home_joints_pv_mode()
-        # time.sleep(2)
-        # print("\n--- 进入站立姿态 (位置-速度模式) ---")
-        # robot.switch_all_mode_pos_vel()
-        # robot.move_all_pos_vel_mode(
-        #     target_positions=[
-        #         0, -0.4, -0.8,  # LF
-        #         0, -0.4, -0.8,  # RF
-        #         0, -0.4, -0.8,  # LH
-        #         0, -0.4, -0.8,  # RH
-        #     ],
-        #     velocity=[1]*12
-        # )
-
-        robot.home_joints_mit_mode()
-        time.sleep(2)
-        print("\n--- 进入站立姿态 (MIT模式) ---")
-        robot.switch_all_mode_mit()
-        robot.move_all_mit_mode(
-            pos=[
-                0, -0.4, -0.8,  # LF
-                0, -0.4, -0.8,  # RF
-                0, -0.4, -0.8,  # LH
-                0, -0.4, -0.8,  # RH
-            ]
-        )
-
-        # 持续监控机器人状态
-        print("\n--- 开始监控所有关节状态 (按 Ctrl+C 停止) ---")
-        while True:
-            # 获取所有关节的反馈
-            joint_states = robot.get_all_joint_feedback()
-
-            # 格式化打印
-            print("=" * 80)
-            for i in range(0, 12, 3):
-                row_str = ""
-                for j in range(3):
-                    joint_id = robot.JOINT_CONFIGS[i + j].id
-                    state = joint_states.get(joint_id)
-                    if state:
-                        pos_deg = math.degrees(state["position"])
-                        row_str += f"ID {hex(joint_id):<4s}: {pos_deg:7.2f}° | "
-                    else:
-                        row_str += f"ID {hex(joint_id):<4s}: [No Data] | "
-                print(row_str)
-
-            time.sleep(1)  # 每秒刷新一次
-
-    except KeyboardInterrupt:
-        print("\n程序被用户中断。")
-    except Exception as e:
-        print(f"\n程序发生错误: {e}")
-    finally:
-        # 无论发生什么，都确保机器人被安全关闭
-        if robot:
-            robot.shutdown()

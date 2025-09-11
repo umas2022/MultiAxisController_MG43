@@ -5,7 +5,7 @@ import time
 import math
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.robot_driver.robots.controller12_mas04 import Controller12
+from src.core.robot_driver_mas04 import Controller12
 
 # 替换为你的CSV文件路径
 filename = 'positions.csv'

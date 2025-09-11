@@ -1,9 +1,7 @@
 # MultiAxisController_MG43
 
+- MG43电机多轴运动系统（12DoF四足狗）
 
 ```sh
 
-python.exe -m src.robot_driver.motor_driver.dm_can_driver
-
-python.exe -m src.robot_driver.robots.controller12_mas04
 ```
