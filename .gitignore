@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# imu_driver 库文件
+!src/drivers/imu_driver/lib/
+!src/drivers/imu_driver/lib/**/*
+src/drivers/imu_driver/lib/**/__pycache__/
+src/drivers/imu_driver/lib/**/*.pyc
+src/drivers/imu_driver/lib/**/*.pyo
+src/drivers/imu_driver/lib/**/*.cache

@@ -37,7 +37,7 @@ try:
     print("\n--- 开始监控所有关节状态 (按 Ctrl+C 停止) ---")
     while True:
         # 获取所有关节的反馈
-        joint_states = robot.get_all_joint_feedback()
+        joint_states = robot.get_all_feedback()
 
         # 格式化打印
         print("=" * 80)

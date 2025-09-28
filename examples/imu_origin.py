@@ -4,7 +4,7 @@ from pathlib import Path
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.drivers.imu_driver.imu_driver import IMUDriver
+from src.drivers.imu_driver.imu_driver_origin import IMUDriver
 import time
 
 imu = IMUDriver(port="COM3", baud=921600)

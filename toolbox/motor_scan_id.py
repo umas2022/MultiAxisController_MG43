@@ -1,12 +1,13 @@
 
 import sys
 import os
+from pathlib import Path
 
-# 添加项目根目录到Python路径，确保可以导入项目模块
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# 添加项目根目录到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.robot_driver.motor_driver.DM_CAN import Motor, MotorControl, DM_Motor_Type, DM_variable
-from src.robot_driver.motor_driver.dm_can_driver import DMMotorDriver
+from src.drivers.motor_driver.DM_CAN import Motor, MotorControl, DM_Motor_Type, DM_variable
+from src.drivers.motor_driver.motor_driver import MotorDriver
 
 import serial
 from time import sleep
@@ -22,7 +23,7 @@ BAUDRATE = 961200     # SDK默认的波特率，通常不需要修改
 # 设置要扫描的电机ID范围
 # 大多数情况下，ID不会超过16或32，可以根据需要调整
 MIN_ID = 1
-MAX_ID = 16
+MAX_ID = 12
 
 # 每次测试ID之间的等待时间（秒）
 # 如果扫描不稳定，可以适当增加这个值

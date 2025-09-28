@@ -1,12 +1,16 @@
+
+# 这个脚本无法永久修改电机id！
+# 修改id必须使用串口模式上位机
+
 import sys
 import time
 import os
 
-# 添加项目根目录到Python路径，确保可以导入项目模块
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.robot_driver.motor_driver.DM_CAN import Motor, MotorControl, DM_Motor_Type, DM_variable
-from src.robot_driver.motor_driver.dm_can_driver import DMMotorDriver
+from src.drivers.motor_driver.DM_CAN import Motor, MotorControl, DM_Motor_Type, DM_variable
+from src.drivers.motor_driver.motor_driver import MotorDriver
 
 # ===== 用户配置区域 =====
 # 修改以下参数以适应您的需求
@@ -24,7 +28,7 @@ def change_motor_id():
     print(f"正在连接串口 {PORT}...")
     try:
         # 创建电机驱动实例
-        driver = DMMotorDriver(port=PORT)
+        driver = MotorDriver(port=PORT)
         
         # 添加电机
         print(f"正在添加电机 ID: {hex(CURRENT_ID)}...")
