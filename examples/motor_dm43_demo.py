@@ -1,5 +1,7 @@
 
-
+'''
+示例：【MIT模式/速度位置模式】驱动DM43电机，并持续打印反馈
+'''
 import sys
 from pathlib import Path
 

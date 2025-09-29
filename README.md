@@ -4,7 +4,11 @@
     - mas04: 12DoF四足狗
 
 
+
 ```sh
+# python3.10
 conda activate doglab
+pip install -r requirements.txt
+pip freeze > requirements.txt
 ```
 

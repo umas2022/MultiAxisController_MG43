@@ -1,3 +1,7 @@
+'''
+运动策略部署至真实机器人，记录反馈到csv
+'''
+
 
 
 import sys
@@ -64,10 +68,9 @@ try:
 
         velocity_commands = np.array([0.0, 0.0, 0.0], dtype=np.float32)
 
-        # 参数覆盖
+        # 传入虚假速度
         base_linear_velocity = velocity_commands
-        # joint_positions = target_pos
-        # joint_velocities = np.array([0.0]*12, dtype=np.float32)
+        joint_positions = target_pos
 
         # --- 构造观测向量（示例: 全零） ---
         obs_vector = np.concatenate([
@@ -79,8 +82,6 @@ try:
             joint_velocities,
             last_actions
         ], axis=0)
-
-        
 
         # --- 获取电机目标角 ---
         last_actions,target_pos = policy.infer_action(obs_vector)
@@ -97,13 +98,14 @@ try:
         print(f"target_pos (rad):{[round(v.item(),3) for v in target_pos]}")
 
 
-        ordered_pos = [target_pos[i] for i in robot.MAS04_ORDER]
-        robot.move_all_mit_mode(ordered_pos)
 
-        print(f"ordered_pos (rad):{[round(v.item(),3) for v in ordered_pos]}")
+        robot_order = []
+        for i in [0,3,6,9,1,4,7,10,2,5,8,11]:
+            robot_order.append(target_pos[i])
+        # robot.move_all_mit_mode(robot_order)
 
-        time.sleep(0.01)
-        # wait_here = input("press enter to continue ...")
+        time.sleep(0.1)
+        wait_here = input("press enter to continue ...")
 
 
 except KeyboardInterrupt:

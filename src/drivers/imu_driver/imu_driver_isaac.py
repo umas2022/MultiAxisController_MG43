@@ -46,51 +46,6 @@ class IMUDriver:
         # 注册回调
         self.device.dataProcessor.onVarChanged.append(self._on_update)
 
-    # def _on_update(self, imu_device: DeviceModel):
-    #     """
-    #     内部回调，更新最新数据并执行速度积分。
-    #     """
-    #     current_time = time.perf_counter()
-
-    #     with self._lock:
-    #         # 1. 更新原始传感器数据
-    #         for key in self._latest_data.keys():
-    #             self._latest_data[key] = imu_device.getDeviceData(key)
-            
-    #         # 如果是第一次更新，只记录时间，不进行积分
-    #         if self._last_update_time is None:
-    #             self._last_update_time = current_time
-    #             return
-
-    #         dt = current_time - self._last_update_time
-    #         if dt <= 0: # 避免时间间隔无效
-    #             return
-
-    #         # --- 速度积分计算 ---
-    #         # a. 获取当前姿态和加速度
-    #         acc_body = np.array([self._latest_data["accX"], self._latest_data["accY"], self._latest_data["accZ"]]) * self.G
-    #         angle_deg = np.array([self._latest_data["angleX"], self._latest_data["angleY"], self._latest_data["angleZ"]])
-            
-    #         # b. 创建旋转对象，用于坐标系转换
-    #         rotation = Rotation.from_euler('xyz', angle_deg, degrees=True)
-            
-    #         # c. 从身体坐标系的加速度中移除重力分量，得到纯运动加速度
-    #         # 首先计算世界重力在身体坐标系下的投影
-    #         gravity_in_body = rotation.inv().apply(np.array([0, 0, -self.G]))
-    #         # 从总加速度中减去重力投影，得到运动加速度（身体坐标系）
-    #         motion_acc_body = acc_body + gravity_in_body
-            
-    #         # d. 将运动加速度转换到世界坐标系下
-    #         # 这是为了在固定的坐标系下进行积分，避免旋转带来的复杂性
-    #         motion_acc_world = rotation.apply(motion_acc_body)
-            
-    #         # e. 积分更新世界坐标系下的速度 (v = v0 + a*dt)
-    #         self._velocity_world += motion_acc_world * dt
-
-    #         # f. 更新时间戳
-    #         self._last_update_time = current_time
-
-
     def _on_update(self, imu_device: DeviceModel):
         """
         内部回调，更新最新数据并执行速度积分。
@@ -175,7 +130,7 @@ class IMUDriver:
                                          Tuple[float, float, float]]:
         """
         获取 Isaac Lab 训练所需的9轴数据。
-        - 线速度通过【积分】得到（实验性）。
+        - 线速度通过【积分】得到（偏差极大，不推荐使用）。
         - 角速度和重力投影直接从传感器获取。
         """
         with self._lock:

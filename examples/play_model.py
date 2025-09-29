@@ -1,4 +1,7 @@
 
+'''
+示例: 使用训练好的策略模型进行推理
+'''
 import numpy as np
 import sys
 from pathlib import Path
@@ -18,7 +21,7 @@ if __name__ == "__main__":
     DEFAULT_JOINT_POS = np.array([0.0, -0.4, -0.8] * 4, dtype=np.float32)
 
     # --- 创建策略封装器 ---
-    policy = PolicyRunner(
+    policy = PolicyRunnerPT(
         model_path=MODEL_PATH,
         num_actions=12,
         num_obs=NUM_OBS,

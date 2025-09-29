@@ -39,12 +39,19 @@ class RobotDriverMas04:
     #     'LF_HFE', 'LH_HFE', 'RF_HFE', 'RH_HFE',
     #     'LF_KFE', 'LH_KFE', 'RF_KFE', 'RH_KFE'
     # ]
+
+    # MAS04顺序切换为ISAAC顺序
+    # isaac_pos = [mas04_pos[i] for i in ISAAC_ORDER]
     ISAAC_ORDER = [0,6,3,9,1,7,4,10,2,8,5,11]
+
+    # ISAAC顺序切换为MAS04顺序
+    # mas04_pos = [isaac_pos[i] for i in MAS04_ORDER]
+    MAS04_ORDER = [0,4,8,2,6,10,1,5,9,3,7,11]
 
 
     # 默认的MIT模式控制参数 (可以为不同关节设置不同值)
-    DEFAULT_KP = 30.0
-    DEFAULT_KD = 0.5
+    DEFAULT_KP = 20.0
+    DEFAULT_KD = 0.2
 
     # 默认初始位置
     DEFAULT_POS = [0.0, -0.4, -0.8] * 4  # [LF, RF, LH, RH]
@@ -157,8 +164,8 @@ class RobotDriverMas04:
         velocity: float = 0.3,
         tol_deg: float = 4.0,
         min_step_deg: float = 1.0,
-        kp: List[float] = None,
-        kd: List[float] = None,
+        kp: List[float] = [40]*12,
+        kd: List[float] = [0.1]*12,
     ):
         """
         以 MIT 模式让所有关节回到逻辑零点位置。
@@ -343,18 +350,13 @@ class RobotDriverMas04:
         target_positions: List[float],
         velocity: float = 0.5,
         min_step_deg: float = 1.0,
-        kp: List[float] = None,
-        kd: List[float] = None,
+        kp: List[float] = [DEFAULT_KP]*12,
+        kd: List[float] = [DEFAULT_KD]*12,
     ):
         """
         MIT模式通用平滑运动函数，支持插值拆分（基于固定周期调度）。
         注意此模式微步速度精度较差，建议仅用于位置初始化
         """
-
-        if kp is None:
-            kp = [self.DEFAULT_KP] * len(self.JOINT_CONFIGS)
-        if kd is None:
-            kd = [self.DEFAULT_KD] * len(self.JOINT_CONFIGS)
 
         # 1. 获取当前位置作为起点
         start_positions = []

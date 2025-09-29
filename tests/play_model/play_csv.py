@@ -73,9 +73,18 @@ if __name__ == '__main__':
             row[[f"joint_pos_{i}" for i in range(12)]].values,
             row[[f"joint_vel_{i}" for i in range(12)]].values,
             row[[f"actions_{i}" for i in range(12)]].values,
-            # 如果有高度扫描数据，在这里添加
-            np.array([], dtype=np.float32)
         ]
+
+        # # 线速度覆盖为零
+        # obs_parts[0] = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        # # 角速度覆盖为零
+        # obs_parts[1] = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        # # 重力向量覆盖为 [0, 0, -1]
+        # obs_parts[2] = np.array([0.0, 0.0, -1.0], dtype=np.float32)
+        # # joint_pos覆盖为默认站立位置
+        # obs_parts[4] = DEFAULT_JOINT_POS
+        # # joint_vel覆盖为零
+        # obs_parts[5] = np.array([0.0] * 12, dtype=np.float32)
 
         obs_vector = np.concatenate(obs_parts, axis=0).astype(np.float32)
 

@@ -1,3 +1,7 @@
+
+'''
+示例：打印IMU原始9轴数据
+'''
 import sys
 from pathlib import Path
 

@@ -1,5 +1,7 @@
 
-
+'''
+示例：驱动MAS04机器人，进入站立姿态，并持续打印所有关节的状态
+'''
 import sys
 from pathlib import Path
 
