@@ -53,9 +53,15 @@ class RobotDriverMas04:
     DEFAULT_KP = 20.0
     DEFAULT_KD = 0.2
 
+    # 机器人最大速度
+    MAX_VELOCITY = 0.8
+
     # 默认初始位置
     DEFAULT_POS = [0.0, -0.4, -0.8] * 4  # [LF, RF, LH, RH]
     DEFAULT_POS_ISAAC = [0.0]*4 + [-0.4]*4 + [-0.8]*4  # Isaac Sim的顺序
+
+    # 关节归零堵转扭矩阈值
+    STALL_TORQUE_THRESHOLD = 5.0  # Nm
 
     def __init__(self, port: str, motor_type: DM_Motor_Type = DM_Motor_Type.DM4310):
         """
@@ -66,8 +72,6 @@ class RobotDriverMas04:
         """
         print("--- 初始化四足机器人 ---")
         self.driver = MotorDriver(port=port)
-
-        print("正在注册12个关节电机...")
         for joint_obj in self.JOINT_CONFIGS:
             self.driver.add_motor(joint_obj.id, motor_type)
 
@@ -144,7 +148,7 @@ class RobotDriverMas04:
 
                     # 堵转安全检测
                     torque = feedback["torque"]
-                    if abs(torque) > 3:
+                    if abs(torque) > self.STALL_TORQUE_THRESHOLD:
                         self.shutdown()
                         raise RuntimeError(
                             f"错误：关节 ID {hex(cfg.id)} 可能堵转，已紧急停止机器人！"
@@ -162,10 +166,10 @@ class RobotDriverMas04:
     def home_joints_mit_mode(
         self,
         velocity: float = 0.3,
-        tol_deg: float = 4.0,
+        tol_deg: float = 8.0,
         min_step_deg: float = 1.0,
-        kp: List[float] = [40]*12,
-        kd: List[float] = [0.1]*12,
+        kp: List[float] = [30]*12,
+        kd: List[float] = [0.4]*12,
     ):
         """
         以 MIT 模式让所有关节回到逻辑零点位置。
@@ -204,7 +208,7 @@ class RobotDriverMas04:
 
                 # 堵转检测
                 torque = feedback["torque"]
-                if abs(torque) > 3:
+                if abs(torque) > self.STALL_TORQUE_THRESHOLD:
                     self.shutdown()
                     raise RuntimeError(
                         f"错误：关节 ID {hex(cfg.id)} 可能堵转，已紧急停止机器人！"
@@ -328,6 +332,7 @@ class RobotDriverMas04:
         以 MIT 模式控制所有关节
         需要首先调用 switch_all_mode_mit() 切换模式
         程序运行时间约0.0015~0.0027s
+        输入JOINT_CONFIGS定义的默认顺序
         """
         n = len(self.JOINT_CONFIGS)
         if not all(len(lst) == n for lst in [pos, vel, kp, kd, torque]):

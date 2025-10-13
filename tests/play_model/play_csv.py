@@ -37,9 +37,10 @@ def load_rsl_rl_policy(model_path, num_actions, num_obs):
 
 if __name__ == '__main__':
     # --- 用户配置 ---
-    MODEL_PATH = r"..\..\src\models\pt\model_2025-09-11_17-12-00.pt"  # 您的模型路径
-    INPUT_CSV_PATH = r"obs_stand_2025-09-11_17-12-00.csv"                      # 您的输入 CSV 文件路径
-    OUTPUT_CSV_PATH = r"action.csv"                # 您的输出 CSV 文件路径
+    MODEL_PATH = r"..\..\src\models\pt\model_2025-09-11_17-12-00.pt"  
+    # INPUT_CSV_PATH = r"obs_stand_2025-09-11_17-12-00.csv"                  
+    INPUT_CSV_PATH = r"obs_go_2025-09-11_17-12-00.csv"                    
+    OUTPUT_CSV_PATH = r"action.csv"              
 
     NUM_ACTIONS = 12
     NUM_HEIGHT_SCAN_POINTS = 0
@@ -75,8 +76,8 @@ if __name__ == '__main__':
             row[[f"actions_{i}" for i in range(12)]].values,
         ]
 
-        # # 线速度覆盖为零
-        # obs_parts[0] = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        # 线速度覆盖为目标速度
+        obs_parts[0] = row[['velocity_commands_0', 'velocity_commands_1', 'velocity_commands_2']].values.astype(np.float32)
         # # 角速度覆盖为零
         # obs_parts[1] = np.array([0.0, 0.0, 0.0], dtype=np.float32)
         # # 重力向量覆盖为 [0, 0, -1]

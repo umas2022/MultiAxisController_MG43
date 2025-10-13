@@ -30,33 +30,33 @@ try:
 
         print("\n--- 开始测试电机控制模式 ---")
 
-        # # ======================================================================
-        # # --- 示例1: MIT模式  ---
-        # # ======================================================================
-        # print("\n测试: MIT模式")
-        # driver.switch_all_mode_mit() # 切换所有电机到MIT模式
+        # ======================================================================
+        # --- 示例1: MIT模式  ---
+        # ======================================================================
+        print("\n测试: MIT模式")
+        driver.switch_all_mode_mit() # 切换所有电机到MIT模式
 
-        # kp, kd, torque = 5.0, 0.5, 0.0
-        # vel_target = 0.0
+        kp, kd, torque = 5.0, 0.5, 0.0
+        vel_target = 0.0
         
-        # # 为每个电机设置不同的目标位置
-        # for motor_id in MOTOR_IDS_TO_TEST:
-        #     target_pos = math.radians(0.0)
-        #     driver.move_mit_mode(motor_id, target_pos, vel_target, kp, kd, torque)
-        #     print(f"  > 已发送MIT指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
+        # 为每个电机设置不同的目标位置
+        for motor_id in MOTOR_IDS_TO_TEST:
+            target_pos = math.radians(0.0)
+            driver.move_mit_mode(motor_id, target_pos, vel_target, kp, kd, torque)
+            print(f"  > 已发送MIT指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
 
 
         # ======================================================================
         # --- 示例2: 位置速度模式 ---
         # ======================================================================
-        print("\n测试: 位置速度模式")
-        driver.switch_all_mode_pos_vel() # 切换所有电机到位置速度模式
+        # print("\n测试: 位置速度模式")
+        # driver.switch_all_mode_pos_vel() # 切换所有电机到位置速度模式
 
-        target_vel = 1.0
-        for motor_id in MOTOR_IDS_TO_TEST:
-            target_pos = math.radians(0.0)
-            driver.move_pos_vel_mode(motor_id, target_pos, target_vel)
-            print(f"  > 已发送位置速度指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
+        # target_vel = 1.0
+        # for motor_id in MOTOR_IDS_TO_TEST:
+        #     target_pos = math.radians(0.0)
+        #     driver.move_pos_vel_mode(motor_id, target_pos, target_vel)
+        #     print(f"  > 已发送位置速度指令给电机 {hex(motor_id)}: 目标 {math.degrees(target_pos):.1f}°")
 
 
         # --- 通用反馈循环 ---
