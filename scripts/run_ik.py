@@ -14,8 +14,11 @@ from src.drivers.elrs_driver.elrs_driver import ElrsReceiver
 from src.drivers.ik_driver.ik_driver import CombinedMotionController
 
 # --- 配置 ---
-MOTOR_PORT = "COM3"
-ELRS_PORT = "COM6"
+# MOTOR_PORT = "COM3"
+# ELRS_PORT = "COM6"
+
+MOTOR_PORT = "/dev/ttyACM0"
+ELRS_PORT = "/dev/ttyUSB0"
 
 
 robot = None
@@ -27,6 +30,9 @@ try:
 
     # 创建ELRS接收机实例并启动
     elrs = ElrsReceiver(serial_port=ELRS_PORT, baud_rate=420000)
+    if not elrs.running:
+        print("elrs not running, system exit ...")
+        sys.exit(1)
 
     print("\n--- 复位所有关节到初始位置 (MIT模式) ---")
     robot.home_joints_mit_mode()
@@ -44,13 +50,15 @@ try:
     while True:
         # 输入目标方向
         linear_x,linear_y,angular_z = elrs.get_channel_xyz()
-        # print(f"线速度X: {linear_x:.2f}, 线速度Y: {linear_y:.2f}, 角速度Z: {angular_z:.2f}")
+        print(f"线速度X: {linear_x:.2f}, 线速度Y: {linear_y:.2f}, 角速度Z: {angular_z:.2f}")
         
         motor_angles = controller.get_motor_angles(linear_x, linear_y, angular_z)
         controller.update(linear_x, linear_y, angular_z)
 
         # wait_here = input("按回车继续")
         robot.move_all_mit_mode(motor_angles)
+
+
 
 
 

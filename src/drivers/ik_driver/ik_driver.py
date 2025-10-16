@@ -24,7 +24,7 @@ class CombinedMotionController:
         self.step_length_angular = 0.15
         self.lift_height = 0.05
         # 步态周期/s
-        self.period = 5
+        self.period = 2
         # 控制频率/Hz
         self.Hz = 50
         self.dt = 1.0 / self.Hz

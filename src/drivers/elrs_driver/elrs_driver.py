@@ -2,6 +2,7 @@
 import serial
 import threading
 import time
+import sys
 
 # --- CRSF 协议常量 ---
 CRSF_ADDRESS = 0xC8
@@ -27,9 +28,10 @@ class ElrsReceiver:
         self.serial_port = serial_port
         self.baud_rate = baud_rate
 
-        self.ser = None
+        self.ser = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
+            
         self.buffer = bytearray()
-        self.latest_channels = [992] * 16  # 默认居中值
+        self.latest_channels = [992] * 16
         self.running = True
 
         # 通道取值范围
@@ -46,15 +48,16 @@ class ElrsReceiver:
         # 开启串口读取线程
         self.serial_thread = threading.Thread(target=self._serial_read_loop, daemon=True)
         self.serial_thread.start()
+        time.sleep(0.5)
 
     def _serial_read_loop(self):
         """串口读取和解析的循环"""
-        try:
-            self.ser = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
-        except serial.SerialException as e:
-            print(f"[ELRS] Failed to open serial port {self.serial_port}: {e}")
-            self.running = False
-            return
+        # try:
+        #     self.ser = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
+        #     self.running = True
+        # except Exception as e:
+        #     print("elrs serial error: ",e)
+        #     sys.exit(1)
 
         while self.running:
             try:
@@ -96,7 +99,11 @@ class ElrsReceiver:
 
     def get_all_channel_raw(self):
         """获取当前16通道值 (列表形式, 每个值 174~1811)"""
-        return self.latest_channels.copy()
+        if self.running:
+            return self.latest_channels.copy()
+        else:
+            raise RuntimeError("elrs resolver not running")
+            
 
     def get_channel_raw(self, index):
         """获取单个通道值 (index: 0~15)"""
@@ -134,7 +141,10 @@ class ElrsReceiver:
 
 # --- 示例用法 ---
 if __name__ == "__main__":
-    elrs = ElrsReceiver("COM3", 420000)
+    elrs = ElrsReceiver("/dev/ttyUSB0", 420000)
+    if not elrs.running:
+        print("elrs not running, exit ...")
+        sys.exit(1)
     try:
         while True:
             chans = elrs.get_all_channel_raw()
