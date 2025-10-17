@@ -13,10 +13,10 @@ from src.drivers.imu_driver.imu_driver_isaac import IMUDriver
 from src.drivers.elrs_driver.elrs_driver import ElrsReceiver
 
 # --- 配置 ---
-MOTOR_PORT = "COM3"
-IMU_PORT = "COM4"
-ELRS_PORT = "COM5"
-MODEL_PATH = "..\src\models\pt\model_2025-09-11_17-12-00.pt"
+MOTOR_PORT = "/dev/ttyACM0"
+ELRS_PORT = "/dev/ttyUSB0"
+IMU_PORT = "/dev/ttyUSB1"
+MODEL_PATH = "../src/models/pt/model_2025-10-17_10-12-43.pt"
 
 
 robot = None
@@ -32,6 +32,9 @@ try:
 
     # 创建ELRS接收机实例并启动
     elrs = ElrsReceiver(serial_port=ELRS_PORT, baud_rate=420000)
+    if not elrs.running:
+        print("elrs not running, system exit ...")
+        sys.exit(1)
 
     print("\n--- 复位所有关节到初始位置 (MIT模式) ---")
     robot.home_joints_mit_mode()
@@ -48,7 +51,8 @@ try:
     policy = PolicyRunnerPT(
         model_path=MODEL_PATH,
         num_actions=12,
-        num_obs=3 + 3 + 3 + 3 + 12 + 12 + 12,
+        # num_obs=3 + 3 + 3 + 3 + 12 + 12 + 12,   # 48D with base_lin_vel
+        num_obs=3 + 3 + 3 + 12 + 12 + 12,   # 45D without base_lin_vel
         default_joint_pos=robot.DEFAULT_POS_ISAAC,
         action_scale=0.25,
     )
@@ -68,18 +72,16 @@ try:
 
         # 获取遥控器数据并计算目标速度
         x, y, z = elrs.get_channel_xyz()
+        # x,y,z = 0,0,0
         velocity_commands = np.array([x, y, z], dtype=np.float32) * robot.MAX_VELOCITY
 
         # 参数覆盖
         base_linear_velocity = velocity_commands
-        # joint_positions = joint_positions + np.array(
-        #     [0, 0, -0.2, 0, 0, -0.2, 0, 0, -0.2, 0, 0, -0.2]
-        # )
 
-        # --- 构造观测向量（示例: 全零） ---
+        # --- 构造观测向量 ---
         obs_vector = np.concatenate(
             [
-                base_linear_velocity,
+                # base_linear_velocity,
                 base_angular_velocity,
                 projected_gravity,
                 velocity_commands,

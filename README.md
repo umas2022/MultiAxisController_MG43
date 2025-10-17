@@ -16,8 +16,9 @@ conda env create -f environment.yml
 pip install -r requirements.txt
 pip freeze > requirements.txt
 
-python ./scripts/run_ik.py
-python ./scripts/run_rl.py
+cd scripts/
+python run_ik.py
+python run_rl.py
 ```
 
 
